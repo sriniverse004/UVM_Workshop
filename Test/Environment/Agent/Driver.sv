@@ -94,7 +94,8 @@ task ahb_master_driver::run_phase(uvm_phase phase);
 					if (vif.HREADY == 1'b1)
 						begin 
 							vif.HWDATA = req.m_wdata;
-							break;		
+							break;	
+						end
 				end
 		end
 	else
@@ -105,9 +106,11 @@ task ahb_master_driver::run_phase(uvm_phase phase);
 				begin @ (posedge vif.HCLK)
 					if (vif.HREADY == 1'b1)
 						begin 
-							vif.HWDATA = req.m_wdata;
-							break;		
+							req.m_rdata = vif.HRDATA;
+							break;	
+						end
 				end
+		end
 end
 	
 
