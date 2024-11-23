@@ -73,6 +73,31 @@ task ahb_master_monitor::run_phase(uvm_phase phase);
 
     // Please put your logic here....
 
+    forever 
+    begin
+
+        // Get the next item from the sequencer
+        //seq_item_port.get_next_item(req);
+
+        // Cast and clone the request packet into the response packet.
+        //$cast(rsp, req.clone());
+
+        // Set the id information for the response packet from the request packet.
+        //rsp.set_id_info(req);
+
+        // Please put your logic here....
+	
+        if (vif.HWRITE == 1'b1)
+	    	begin
+		   
+		    end
+	    else
+	    	begin 
+	    	
+		    end
+    end
+	
+
 endtask : run_phase
 
 
