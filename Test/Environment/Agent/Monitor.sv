@@ -72,14 +72,85 @@ task ahb_master_monitor::run_phase(uvm_phase phase);
     `uvm_info(get_type_name(), "Inside the Run Phase of ahb_master_monitor.", UVM_HIGH)
 
     // Please put your logic here....
-forever
-	begin
-		always @ (posedge vif.HCLKK)
-			
-	end
+	task_sm();
 	
 
 endtask : run_phase
+
+	    task   task_sm();
+		    
+		localparam s1 = 3'b000;
+		localparam s2 = 3'b001 // Write Address phase;
+		localparam s3 = 3'b010 // Read Address phase;
+		localparam s4 = 3'b011 // Write Data phase;
+		localparam s5 = 3'b100 // Read Data phase;
+
+		    reg [2:0] ps = 3'b000;
+		    reg [2:0] ns;
+
+		    always @ (ps)
+			    begin 
+				    case (ps)
+					    s1:
+						    begin 
+							    if (vif.HWRITE) 
+								    begin
+								    resp.m_read_write = AHB_WRITE;
+								    ns = s2;
+								    end
+							    
+							    else 
+								    begin
+								    resp.m_read_write = AHB_READ;
+								    ns =s3;
+								    end
+						    end
+					    s2: 
+						    begin
+							    if (vif.HREADY)
+								    begin
+								    resp.m_address = vif.HADDR;
+								    ns = s4;
+								    end
+							    
+						    end
+					    s3: 
+						    begin
+							    if (vif.HREADY)
+								    begin
+								    resp.m_address = vif.HADDR;
+								    ns = s5;
+								    end
+							    
+						    end
+					    s4: 
+						    begin
+							    if (vif.HREADY)
+								    begin
+								    resp.m_wdata = vif.HWDATA;
+								    ns = s1;
+								    end
+							    
+						    end
+					     s5: 
+						    begin
+							    if (vif.HREADY)
+								    begin
+								    resp.m_rdata = vif.HRDATA;
+								    ns = s1;
+								    end
+							    
+						    end
+					    default:
+						    ns = s1;
+					    
+			    end
+					    always @ (posedge vif.HCLK)
+						    begin 
+							ps = ns;
+						    end
+
+	    endtask
 
 
 `endif
