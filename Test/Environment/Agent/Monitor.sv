@@ -72,37 +72,36 @@ task ahb_master_monitor::run_phase(uvm_phase phase);
     `uvm_info(get_type_name(), "Inside the Run Phase of ahb_master_monitor.", UVM_HIGH)
 
     // Please put your logic here....
+	resp   = ahb_master_transaction#(AHB_ADDR_WIDTH, AHB_DATA_WIDTH)::type_id::create("resp", this);
 	task_sm();
-	
 
 endtask : run_phase
 
-	    task   task_sm();
+	    task  ahb_master_monitor::task_sm();
 		    
-		localparam s1 = 3'b000;
-		localparam s2 = 3'b001 // Write Address phase;
-		localparam s3 = 3'b010 // Read Address phase;
-		localparam s4 = 3'b011 // Write Data phase;
-		localparam s5 = 3'b100 // Read Data phase;
+		localparam s1 = 2'b00; // Idle
+		localparam s2 = 2'b01 // Address phase;
+		localparam s3 = 2'b10 // Write Data phase;
+		localparam s4 = 2'b11 // Read Data phase;
 
-		    reg [2:0] ps = 3'b000;
-		    reg [2:0] ns;
+		    reg [1:0] ps = 2'b00;
+		    reg [1:0] ns;
 
 		    always @ (ps)
 			    begin 
 				    case (ps)
 					    s1:
 						    begin 
-							    if (vif.HWRITE) 
+							    if (vif.HREADY) 
 								    begin
-								    resp.m_read_write = AHB_WRITE;
+								   // resp.m_read_write = AHB_WRITE;
 								    ns = s2;
 								    end
 							    
 							    else 
 								    begin
-								    resp.m_read_write = AHB_READ;
-								    ns =s3;
+								   // resp.m_read_write = AHB_READ;
+								    ns =s1;
 								    end
 						    end
 					    s2: 
@@ -110,35 +109,41 @@ endtask : run_phase
 							    if (vif.HREADY)
 								    begin
 								    resp.m_address = vif.HADDR;
-								    ns = s4;
+									    if (vif.HWRITE)
+										    begin
+											 resp.m_read_write = AHB_WRITE;
+											 ns = s3;
+										    end
+									    else
+										     begin
+											 resp.m_read_write = AHB_READ;
+											 ns = s4;
+										    end
 								    end
+							    else
+								    ns = s2;
 							    
 						    end
 					    s3: 
 						    begin
 							    if (vif.HREADY)
 								    begin
-								    resp.m_address = vif.HADDR;
-								    ns = s5;
+								    resp.m_wdata = vif.HWDATA;
+								    ns = s1;
 								    end
+							    else 
+								    ns = s3;
 							    
 						    end
 					    s4: 
 						    begin
 							    if (vif.HREADY)
 								    begin
-								    resp.m_wdata = vif.HWDATA;
-								    ns = s1;
-								    end
-							    
-						    end
-					     s5: 
-						    begin
-							    if (vif.HREADY)
-								    begin
 								    resp.m_rdata = vif.HRDATA;
 								    ns = s1;
 								    end
+							    else 
+								    ns = s4;
 							    
 						    end
 					    default:
@@ -150,7 +155,7 @@ endtask : run_phase
 							ps = ns;
 						    end
 
-	    endtask
+	    endtask : task_sm
 
 
 `endif
