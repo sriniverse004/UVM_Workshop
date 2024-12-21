@@ -84,37 +84,25 @@ task ahb_master_driver::run_phase(uvm_phase phase);
         rsp.set_id_info(req);
 
         // Please put your logic here....
-	
-	if (req.m_read_write == AHB_WRITE)
-		begin
-		vif.HWRITE = 1'b1;
-		vif.HADDR = req.m_address;
-			forever 
-				begin @ (posedge vif.HCLK)
-					if (vif.HREADY == 1'b1)
-						begin 
-							vif.HWDATA = req.m_wdata;
-							break;	
-						end
-				end
-		end
-	else
-		begin 
-		viff.HWRITE = 1'b0;
-		vif.HADDR = req.m_address;
-				forever 
-				begin @ (posedge vif.HCLK)
-					if (vif.HREADY == 1'b1)
-						begin 
-							req.m_rdata = vif.HRDATA;
-							break;	
-						end
-				end
-		end
-end
-	
+	wait (vif.HRESETn);
+	    always @ (posedge vif.HCLK) begin
+	    	vif.HADDR  <= req.m_address;
+      		vif.HWRITE <= req.m_read_write;
+      		vif.HTRANS <= AHB_NONSEQ;
 
+		if (vif.HWRITE == AHB_WRITE) begin
+			vif.HWDATA <= req.m_wdata;
+			vif.HTRANS <= AHB_IDLE;
+			break;
+      		end
+      		if (vif.HWRITE== AHB_READ) begin
+			rsp.m_rdata <= vif.HRDATA;
+			vif.HTRANS <= AHB_IDLE;
+			break;
+		end
 
+	    end
+	
         // Complete the handshake with the sequencer with an item_done() call
 
         seq_item_port.item_done();
